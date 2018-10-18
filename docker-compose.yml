@@ -36,3 +36,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - zookeeper
+  shelter:
+    image: cyberark/secure-pet-shelter
+    build: apps/shelter-data-producer
+    environment:
+      KAFKA_ENDPOINT:
+      CONJUR_APPLIANCE_URL: http://conjur
+      CONJUR_ACCOUNT: rescue
+      CONJUR_AUTHN_LOGIN:
+      CONJUR_AUTHN_API_KEY:
+      SHELTER_DATA_KEY_ID: kafka/topics/pets/db-symmetric-key
+    volumes:
+      - ./apps/shelter-data-producer:/opt/shelter
+    links:
+      - kafka:kafka

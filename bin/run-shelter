@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -eu
+
+# export HOSTNAME=$(hostname)
+export KAFKA_ENDPOINT="$(hostname):$(docker-compose port kafka 9092 | cut -d: -f2)"
+export CONJUR_ACCOUNT=rescue
+export CONJUR_AUTHN_LOGIN=alice
+export CONJUR_AUTHN_API_KEY=$(
+    docker-compose exec -T conjur \
+                   conjurctl role retrieve-key $CONJUR_ACCOUNT:user:$CONJUR_AUTHN_LOGIN
+       )
+
+docker-compose run --rm --no-deps shelter
