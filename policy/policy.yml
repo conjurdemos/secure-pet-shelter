@@ -1,0 +1,40 @@
+---
+- !group kafka-admin
+- !policy
+  id: kafka
+  owner: !group kafka-admin
+  body:
+    - !group pets-admin
+    - !group pets-reporter
+    - !grant
+      role: !group pets-admin
+      member: !group /kafka-admin
+    - !policy
+      id: topics
+      body:
+        - !policy
+          id: pets
+          owner: !group /kafka/pets-admin
+          body:
+            - !variable db-symmetric-key
+    - !permit
+      role: !group pets-reporter
+      privileges: [ read, execute ]
+      resource: !variable topics/pets/db-symmetric-key
+
+- !user
+  id: alice
+  annotations:
+    job: adoption center sysadmin
+
+- !user
+  id: bob
+  annotations:
+    job: news reporter & lifestyle columnist
+
+- !grant
+  role: !group kafka/pets-admin
+  member: !user alice
+- !grant
+  role: !group kafka/pets-reporter
+  member: !user bob
