@@ -50,3 +50,15 @@ services:
       - ./apps/shelter-data-producer:/opt/shelter
     links:
       - kafka:kafka
+  reporter:
+    image: cyberark/secure-pet-reporter
+    build: apps/pet-reporter
+    environment:
+      KAFKA_ENDPOINT:
+      CONJUR_APPLIANCE_URL: http://conjur
+      CONJUR_ACCOUNT: rescue
+      CONJUR_AUTHN_LOGIN:
+      CONJUR_AUTHN_API_KEY:
+      REPORTER_DATA_KEY_ID: kafka/topics/pets/db-symmetric-key
+    volumes:
+      - ./apps/pet-reporter:/opt/reporter
