@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker-compose exec -T kafka \
+               kafka-console-consumer.sh \
+                 --topic pets \
+                 --from-beginning \
+                 --bootstrap-server "$(hostname):$(docker-compose port kafka 9092 | cut -d: -f2)"

@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  conjur-db:
+    image: postgres:9.3
+  conjur:
+    image: cyberark/conjur
+    command: server
+    environment:
+      DATABASE_URL: postgres://postgres@conjur-db/postgres
+      CONJUR_DATA_KEY:
+    depends_on:
+      - conjur-db
+  conjur-cli:
+    image: cyberark/conjur-cli:5
+    depends_on:
+      - conjur
+    volumes:
+      - ./cli:/root
+      - ./policy:/var/policy
+  zookeeper:
+    image: wurstmeister/zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: mydas-heros.local
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: pets:1:1
+      PORT_COMMAND: "docker port $$(hostname) 9092/tcp | cut -d: -f2"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper

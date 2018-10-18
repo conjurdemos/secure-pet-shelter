@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -eux
+
+# By default, we create 3 Kafka replicas. Set the KAFKA_REPLICAS environment
+# variable to override this.
+kafka_replicas=${KAFKA_REPLICAS:-"3"}
+export HOSTNAME=$(hostname)
+
+function conjurctl() {
+    docker-compose exec -T conjur conjurctl $@
+}
+function conjur() {
+    docker-compose run -T --rm --no-deps conjur-cli $@
+}
+
+docker-compose down
+docker-compose run -T --no-deps --rm conjur data-key generate | tee conjur-data-key
+export CONJUR_DATA_KEY=$(cat conjur-data-key)
+docker-compose up -d conjur
+
+conjurctl wait
+conjurctl account create rescue
+admin_api_key=$(conjurctl role retrieve-key rescue:user:admin | tr -d "\r\n")
+# conjur init -u http://conjur -a rescue
+cat <<CONJURRC > cli/.conjurrc
+appliance_url: http://conjur
+account: rescue
+CONJURRC
+conjur authn login -u admin -p $admin_api_key
+conjur policy load root /var/policy/policy.yml
+
+alice_api_key=$(conjurctl role retrieve-key rescue:user:alice | tr -d "\r\n")
+conjur authn login -u alice -p $alice_api_key
+conjur variable values add kafka/topics/pets/db-symmetric-key "$(openssl rand -base64 32)"
+
+docker-compose up -d \
+               --scale kafka=$kafka_replicas \
+               kafka
