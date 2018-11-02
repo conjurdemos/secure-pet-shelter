@@ -37,7 +37,7 @@ services:
     depends_on:
       - zookeeper
   shelter:
-    image: cyberark/secure-pet-shelter
+    image: ryanprior/secure-pet-shelter
     build: apps/shelter-data-producer
     environment:
       KAFKA_ENDPOINT:
@@ -51,7 +51,7 @@ services:
     links:
       - kafka:kafka
   reporter:
-    image: cyberark/secure-pet-reporter
+    image: ryanprior/secure-pet-reporter
     build: apps/pet-reporter
     environment:
       KAFKA_ENDPOINT:

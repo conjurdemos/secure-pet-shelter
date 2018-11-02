@@ -2,6 +2,7 @@
 
 set -eu
 
+# service-name.namespace.svc.cluster.local
 # export HOSTNAME=$(hostname)
 export KAFKA_ENDPOINT="$(hostname):$(docker-compose port kafka 9092 | cut -d: -f2)"
 export CONJUR_ACCOUNT=rescue

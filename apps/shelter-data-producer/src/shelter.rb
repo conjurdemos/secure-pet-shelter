@@ -1,5 +1,4 @@
 require 'base64'
-require 'conjur-api'
 require 'croupier'
 require 'date'
 require 'faker'
@@ -51,13 +50,8 @@ class Shelter
     @producer = kafka.producer
     @day = DateTime.now
 
-    conjur_account = ENV['CONJUR_ACCOUNT']
-    conjur_username = ENV['CONJUR_AUTHN_LOGIN']
-    conjur_api_key = ENV['CONJUR_AUTHN_API_KEY']
-    data_key_id = ENV['SHELTER_DATA_KEY_ID']
-
-    conjur = Conjur::API.new_from_key conjur_username, conjur_api_key
-    @data_key = Base64.decode64(conjur.resource("#{conjur_account}:variable:#{data_key_id}").value)[0..31]
+    @data_key = Base64.decode64(ENV['KAFKA_TOPIC_KEY'])[0..31]
+    @topic = ENV['KAFKA_TOPIC']
   end
   def receive_animals number
     (1..number).each {
@@ -66,7 +60,7 @@ class Shelter
                                                          date: @day.strftime('%Y-%b-%d'),
                                                          animal: Animal.new.to_h
                                                        }.to_json, key: @data_key)),
-                        topic: 'pets')
+                        topic: @topic)
     }
     @producer.deliver_messages
   end

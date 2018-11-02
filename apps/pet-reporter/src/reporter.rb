@@ -1,5 +1,4 @@
 require 'base64'
-require 'conjur-api'
 require 'date'
 require 'json'
 require 'kafka'
@@ -13,19 +12,12 @@ class Reporter
     @kafka = Kafka.new kafka_servers, client_id: "secure-reporter"
     @last_processed_message = 0
 
-    conjur_account = ENV['CONJUR_ACCOUNT']
-    conjur_username = ENV['CONJUR_AUTHN_LOGIN']
-    conjur_api_key = ENV['CONJUR_AUTHN_API_KEY']
-    data_key_id = ENV['REPORTER_DATA_KEY_ID']
-
-    conjur = Conjur::API.new_from_key conjur_username, conjur_api_key
-    id="#{conjur_account}:variable:#{data_key_id}"
-    puts "fetching from Conjur: #{id}"
-    @data_key = Base64.decode64(conjur.resource(id).value)[0..31]
+    @data_key = Base64.decode64(ENV['KAFKA_TOPIC_KEY'])[0..31]
     @crypto = Slosilo::Symmetric.new
+    @topic = ENV['KAFKA_TOPIC']
   end
   def run_sync_forever
-    @kafka.each_message(topic: 'pets') { |message|
+    @kafka.each_message(topic: @topic) { |message|
       @last_processed_message = message.offset
       puts @crypto.decrypt(Base64.decode64(message.value), key: @data_key)
     }
